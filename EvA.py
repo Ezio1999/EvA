@@ -7,7 +7,7 @@ import  platform
 from tkinter import ttk
 from PIL import Image, ImageTk
 from datetime import datetime
-from EvAQr import abrir_Ventana_qr
+from EvAQr import abrir_Ventana_qr 
 
 #Funcionalidad
 anterior = None
@@ -20,13 +20,13 @@ def crear_o_cargar_excel(nombre_archivo):
     except FileNotFoundError:
         workbook = openpyxl.Workbook()
         hoja = workbook.active
-        hoja.append(["Codigo Qr"])
+        hoja.append(["Codigo Qr", "Carrera"])
         workbook.save(nombre_archivo)
     return workbook, hoja
 
 #Verifica si existe la Columna con la fecha actual si no para añadirla
 def obtener_columna_fecha(hoja, fecha):
-    for col in range(2, hoja.max_column + 1):
+    for col in range(3, hoja.max_column + 1):
         if hoja.cell(row=1, column=col).value == fecha:
             return col
     nueva_columna = hoja.max_column + 1
@@ -40,19 +40,28 @@ def registrar_asistencia(nombre_archivo, qr_data):
     columna_fecha = obtener_columna_fecha(hoja, fecha_actual)
     global anterior
 
+    # Separar el código QR y la carrera
+    if " - " in qr_data:
+        codigo, carrera = qr_data.split(" - ", 1)
+    else:
+        codigo = qr_data
+        carrera = "No especificada"
+
     for fila in range(2, hoja.max_row + 1):
-        if hoja.cell(row=fila, column=1).value == qr_data:
+        if hoja.cell(row=fila, column=1).value == codigo:
+            hoja.cell(row=fila, column=2).value = carrera
             hoja.cell(row=fila, column=columna_fecha).value = "Presente"
             break
     else:
         nueva_fila = hoja.max_row + 1
-        hoja.cell(row=nueva_fila, column=1).value = qr_data
+        hoja.cell(row=nueva_fila, column=1).value = codigo
+        hoja.cell(row=nueva_fila, column=2).value = carrera
         hoja.cell(row=nueva_fila, column=columna_fecha).value = "Presente"
 
     workbook.save(nombre_archivo)
 
     if anterior is not None and qr_data == anterior:
-        print(f"Asistencia registrada: {qr_data} en la fecha {fecha_actual}")
+        print(f"Asistencia registrada: {codigo} ({carrera}) en la fecha {fecha_actual}")
 
     anterior = qr_data
 
@@ -73,8 +82,8 @@ def abrir_excel():
 
 root = tk.Tk()
 root.title("EvA - Registro de Asistencia")
-root.geometry("900x500")
-root.attributes("-fullscreen", True)
+root.geometry("1500x850")
+#root.attributes("-fullscreen", True)
 
 # Encabezado
 header = tk.Frame(root, bg="gray", height=50)
