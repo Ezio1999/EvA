@@ -20,7 +20,7 @@ def crear_o_cargar_excel(nombre_archivo):
     except FileNotFoundError:
         workbook = openpyxl.Workbook()
         hoja = workbook.active
-        hoja.append(["Codigo Qr", "Carrera"])
+        hoja.append(["Nombre", "Matrícula"])
         workbook.save(nombre_archivo)
     return workbook, hoja
 
@@ -28,7 +28,7 @@ def crear_o_cargar_excel(nombre_archivo):
 def obtener_columna_fecha(hoja, fecha):
     for col in range(3, hoja.max_column + 1):
         if hoja.cell(row=1, column=col).value == fecha:
-            return col
+            return col  
     nueva_columna = hoja.max_column + 1
     hoja.cell(row=1, column=nueva_columna).value = fecha
     return nueva_columna
@@ -40,28 +40,28 @@ def registrar_asistencia(nombre_archivo, qr_data):
     columna_fecha = obtener_columna_fecha(hoja, fecha_actual)
     global anterior
 
-    # Separar el código QR y la carrera
-    if " - " in qr_data:
-        codigo, carrera = qr_data.split(" - ", 1)
+    # Separar el código QR y la matrícula
+    if " - Matrícula: " in qr_data:
+        codigo, matricula = qr_data.split(" - Matrícula: ", 1)
     else:
         codigo = qr_data
-        carrera = "No especificada"
+        matricula = "No especificada"
 
     for fila in range(2, hoja.max_row + 1):
         if hoja.cell(row=fila, column=1).value == codigo:
-            hoja.cell(row=fila, column=2).value = carrera
+            hoja.cell(row=fila, column=2).value = matricula
             hoja.cell(row=fila, column=columna_fecha).value = "Presente"
             break
     else:
         nueva_fila = hoja.max_row + 1
         hoja.cell(row=nueva_fila, column=1).value = codigo
-        hoja.cell(row=nueva_fila, column=2).value = carrera
+        hoja.cell(row=nueva_fila, column=2).value = matricula
         hoja.cell(row=nueva_fila, column=columna_fecha).value = "Presente"
 
     workbook.save(nombre_archivo)
 
     if anterior is not None and qr_data == anterior:
-        print(f"Asistencia registrada: {codigo} ({carrera}) en la fecha {fecha_actual}")
+        print(f"Asistencia registrada: {codigo} (Matrícula: {matricula}) en la fecha {fecha_actual}")
 
     anterior = qr_data
 
@@ -100,7 +100,7 @@ label_video = tk.Label(camara, bg="black")
 label_video.pack()
 
 # Tabla de asistencia
-columnas = ("Nombre Completo", "Fecha", "Hora")
+columnas = ("Alumno", "Fecha", "Hora")
 TablaAsistencia = ttk.Treeview(root, columns=columnas, show="headings", height=15)
 for col in columnas:
     TablaAsistencia.heading(col, text=col)

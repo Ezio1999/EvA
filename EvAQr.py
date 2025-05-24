@@ -6,27 +6,12 @@ from pathlib import Path
 from tkinter import ttk
 import json
 
-# Cargar carreras desde archivo
-def cargar_carreras():
-    try:
-        with open('carreras.json', 'r') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return ["Estilismo", "Inglés"]
-
-# Guardar carreras en archivo
-def guardar_carreras(carreras):
-    with open('carreras.json', 'w') as file:
-        json.dump(carreras, file)
-
-opciones = cargar_carreras()
-
 #Ventana
 def abrir_Ventana_qr():
     # Ventana Qr
     root = tk.Tk()
     root.title("EvA - Creación de Qr")
-    root.geometry("400x200")
+    root.geometry("400x150")
 
     # Frame para los campos de texto
     entrada_frame = tk.Frame(root)
@@ -46,38 +31,26 @@ def abrir_Ventana_qr():
     aMaterno.grid(row=2, column=1, padx=(0, 5), pady=5)
 
     # ComboBox de Carreras
-    tk.Label(entrada_frame, text="Carrera", fg="black").grid(row=3, column=0, padx=(0, 5), pady=5, sticky="w")
-    combo = ttk.Combobox(entrada_frame, values=opciones)
-    combo.current(0)
-    combo.grid(row=3, column=1, padx=(0, 5), pady=5)
+    tk.Label(entrada_frame, text="Matricula", fg="black").grid(row=3, column=0, padx=(0, 5), pady=5, sticky="w")
+    matricula = ttk.Entry(entrada_frame)
+    matricula.grid(row=3, column=1, padx=(0, 5), pady=5)
 
-    # Frame para gestionar carreras
-    gestion_frame = tk.Frame(entrada_frame)
-    gestion_frame.grid(row=4, column=0, columnspan=2, pady=5)
-
-    # Campo para nueva carrera
-    nueva_carrera = tk.Entry(gestion_frame, width=20)
-    nueva_carrera.grid(row=0, column=0, padx=5)
-
-    # Botones para gestionar carreras
-    tk.Button(gestion_frame, text="Agregar", command=lambda: agregar_carrera(nueva_carrera.get())).grid(row=0, column=1, padx=5)
-    tk.Button(gestion_frame, text="Eliminar", command=lambda: eliminar_carrera(combo.get())).grid(row=0, column=2, padx=5)
 
     # Frame de botones
     botones_frame = tk.Frame(root)
     botones_frame.pack(side="right", padx=10, fill="both", expand=True, pady=10)
 
     # Botones
-    tk.Button(botones_frame, text="Crear QR", bg="gray", fg="black",command=lambda: main(nombre.get(), aPaterno.get(), aMaterno.get(), combo.get())).pack(pady=10)
+    tk.Button(botones_frame, text="Crear QR", bg="gray", fg="black",command=lambda: main(nombre.get(), aPaterno.get(), aMaterno.get(), matricula.get())).pack(pady=10)
     # Funciones
 
     #Creacion de Qr
-    def creacion_Qr(nombre, aPaterno, aMaterno, carrera):
-        if not nombre or not aPaterno or not aMaterno:
+    def creacion_Qr(nombre, aPaterno, aMaterno, matricula):
+        if not nombre or not aPaterno or not aMaterno or not matricula:
             messagebox.showwarning("Advertencia", "Por favor, completa todos los campos.")
             return
 
-        data = f"{nombre} {aPaterno} {aMaterno} - {carrera}"
+        data = f"{nombre} {aPaterno} {aMaterno} - Matrícula: {matricula}" 
 
         qr = qrcode.QRCode(
             version=1,
@@ -95,48 +68,26 @@ def abrir_Ventana_qr():
         if not os.path.exists(carpeta_imagenes):
             os.makedirs(carpeta_imagenes)
 
-        ruta_completa = os.path.join(carpeta_imagenes, f"{data}.png")
-        img.save(ruta_completa)
-
-        messagebox.showinfo("Éxito", f"QR guardado en:\n{ruta_completa}")
-        img.show()
+        # Crear un nombre de archivo usando el nombre completo
+        nombre_archivo = f"{nombre}_{aPaterno}_{aMaterno}.png"
+        ruta_completa = os.path.join(carpeta_imagenes, nombre_archivo)
+        
+        try:
+            img.save(ruta_completa, format='PNG')
+            messagebox.showinfo("Éxito", f"QR guardado en:\n{ruta_completa}")
+            img.show()
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo guardar el archivo: {str(e)}")
 
     #Limpiar campos de texto
     def limpiar_campos():
         nombre.delete(0, tk.END)
         aPaterno.delete(0, tk.END)
         aMaterno.delete(0, tk.END)
-        combo.current(0)
-        nueva_carrera.delete(0, tk.END)
+        matricula.delete(0, tk.END)
 
-    def agregar_carrera(carrera):
-        if carrera and carrera not in opciones:
-            opciones.append(carrera)
-            combo["values"] = opciones
-            combo.current(len(opciones) - 1)
-            nueva_carrera.delete(0, tk.END)
-            guardar_carreras(opciones)  # Guardar después de agregar
-            messagebox.showinfo("Éxito", f"Carrera '{carrera}' agregada correctamente")
-        elif carrera in opciones:
-            messagebox.showwarning("Advertencia", "Esta carrera ya existe")
-        else:
-            messagebox.showwarning("Advertencia", "Por favor, ingresa un nombre de carrera")
-
-    def eliminar_carrera(carrera):
-        if carrera in opciones:
-            opciones.remove(carrera)
-            combo["values"] = opciones
-            if opciones:
-                combo.current(0)
-            else:
-                combo.set("")
-            guardar_carreras(opciones)  # Guardar después de eliminar
-            messagebox.showinfo("Éxito", f"Carrera '{carrera}' eliminada correctamente")
-        else:
-            messagebox.showwarning("Advertencia", "Selecciona una carrera para eliminar")
-
-    def main(nombre, aPaterno, aMaterno, carrera):
-        creacion_Qr(nombre, aPaterno, aMaterno, carrera)
+    def main(nombre, aPaterno, aMaterno, matricula):
+        creacion_Qr(nombre, aPaterno, aMaterno, matricula)
         limpiar_campos()
 
     root.mainloop()
